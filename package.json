@@ -1,6 +1,6 @@
 {
   "name": "rwo2pdf",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tiny script to convert `https://dev.realworldocaml.org` to pdf",
   "main": "index.js",
   "type": "module",
