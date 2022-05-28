@@ -1,0 +1,32 @@
+{
+  "name": "rwo2pdf",
+  "version": "1.0.0",
+  "description": "Tiny script to convert `https://dev.realworldocaml.org` to pdf",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "gen": "node index.js"
+  },
+  "author": "Pomba Magar",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pjmp/rwo2pdf.git"
+  },
+  "keywords": [
+    "rwo",
+    "realworldocaml",
+    "pdf"
+  ],
+  "bugs": {
+    "url": "https://github.com/pjmp/rwo2pdf/issues"
+  },
+  "files": [
+    "*.js"
+  ],
+  "bin": "./index.js",
+  "homepage": "https://github.com/pjmp/rwo2pdf#readme"
+}
