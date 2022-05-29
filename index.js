@@ -22,11 +22,8 @@ async function MergePDFs(files, output) {
     await doc.end()
 
     await new Promise((resolve, reject) => {
-        try {
-            writeStream.on('close', resolve)
-        } catch (e) {
-            reject(e)
-        }
+        writeStream.on('close', resolve)
+        writeStream.on('error', reject)
     })
 }
 
