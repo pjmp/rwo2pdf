@@ -8,8 +8,7 @@ I wanted to read offline but can't buy it from my country.
 
 # Requirements
 
-- nodejs + npm : To save pages as pdf
-- ghostscript : Merge multiple pdfs to one pdf
+Usual nodejs with npm.
 
 # Installation & Usage
 
@@ -35,6 +34,8 @@ cd rwo2pdf
 npm i
 npm run gen
 ```
+
+Note: by default file will be saved to current directory.
 
 # Caveats
 

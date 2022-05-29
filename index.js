@@ -1,10 +1,35 @@
 #!/usr/bin/env node
 
 import { chromium } from 'playwright'
-import { execSync } from 'child_process'
 import { unlink } from 'fs/promises'
+import { Document, ExternalDocument } from 'pdfjs'
+import { createWriteStream, readFileSync, statSync } from 'fs';
+import { exit } from 'process';
+import { join } from 'path';
 
-(async () => {
+async function MergePDFs(files, output) {
+    const doc = new Document()
+
+    const PDFs = files.map((file) => new ExternalDocument(readFileSync(file)));
+
+    for (const file of PDFs) {
+        doc.addPagesOf(file);
+    }
+
+    const writeStream = doc.pipe(createWriteStream(output))
+
+    await doc.end()
+
+    await new Promise((resolve, reject) => {
+        try {
+            writeStream.on('close', resolve)
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
+async function GeneratePDFs() {
     const browser = await chromium.launch({ headless: true })
     const page = await browser.newPage()
     await page.emulateMedia({ media: 'screen' })
@@ -53,8 +78,10 @@ import { unlink } from 'fs/promises'
         titles.push(title)
 
         await page.pdf({
-            printBackground: true,
-            path: title,
+            ...pdfOptions,
+            ...{
+                path: title,
+            },
         })
 
         console.log(`Generated '${title}'`)
@@ -62,29 +89,77 @@ import { unlink } from 'fs/promises'
 
     await browser.close()
 
-    // merge pdf files generated
+    return titles;
+}
+
+async function Cleanup(files) {
+    for (const title of files) {
+        await unlink(title)
+    }
+}
+
+async function main() {
+    const dest = CLi();
+
+    const files = await GeneratePDFs()
+
+    // merge generated pdf files
     const output = 'RealWorldOcaml.pdf'
-    const quoted = titles
-        .map(title => {
-            if (title.includes(' ')) {
-                title = `'${title}'`
-            }
-
-            return title
-        })
-        .join(' ')
-
     console.log('Merging PDFs')
-    execSync(
-        `gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.2 -r200 -dPrinted=false -dNOPAUSE -dQUIET -dBATCH -sOutputFile=${output} ${quoted}`,
-    )
+
+    const destPath = join(dest, output)
+
+    await MergePDFs(files, destPath)
     console.log('PDF files merged')
 
     // deleted generated files
     console.log('Cleaning up PDF files')
-    for (const title of titles) {
-        await unlink(title)
-    }
+    await Cleanup(files)
 
-    console.log(`Done! Saved file as '${output}'`)
-})()
+    console.log(`Done! Saved file as '${destPath}'`)
+}
+
+function CLi() {
+    const args = process.argv.slice(2);
+    const { name, version, dependencies } = JSON.parse(readFileSync('./package.json', { encoding: 'utf-8' }))
+
+    if (args.length < 1) {
+        return '.';
+    } else if (args.length == 1) {
+        let dest = args[0];
+
+        switch (dest) {
+            case "--help":
+            case "-h":
+                console.log(`Usage: ${name} <path>`)
+                exit(0)
+
+            case "--version":
+            case "-v":
+                const deps = Object.keys(dependencies).map((dep) => `${dep} - ${dependencies[dep]}`).join('\n');
+                console.log(`${name} v${version}\n\nDependencies:\n${deps}`)
+                exit(0)
+
+            default:
+                try {
+                    let stat = statSync(dest);
+
+                    if (stat.isDirectory()) {
+                        return dest;
+                    } else {
+                        console.error(`${name}: '${dest}' is not a directory`)
+                        exit(1)
+                    }
+                } catch (error) {
+                    console.error(`${name}: ${error.message}`)
+                    exit(1)
+                }
+        }
+
+    } else {
+        console.error(`Too arguments supplied\nUsage: ${name} <path>`)
+        exit(1)
+    }
+}
+
+await main();

@@ -1,6 +1,6 @@
 {
   "name": "rwo2pdf",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Tiny script to convert `https://dev.realworldocaml.org` to pdf",
   "main": "index.js",
   "type": "module",
@@ -10,7 +10,8 @@
   "author": "Pomba Magar",
   "license": "MIT",
   "dependencies": {
-    "playwright": "latest"
+    "pdfjs": "^2.4.7",
+    "playwright": "^1.22.1"
   },
   "repository": {
     "type": "git",
