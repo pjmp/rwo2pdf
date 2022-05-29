@@ -1,19 +1,20 @@
 #!/usr/bin/env node
 
-import { chromium } from 'playwright'
 import { unlink } from 'fs/promises'
+import { createWriteStream, readFileSync, statSync } from 'fs'
+import { exit } from 'process'
+import { join } from 'path'
+
+import { chromium } from 'playwright'
 import { Document, ExternalDocument } from 'pdfjs'
-import { createWriteStream, readFileSync, statSync } from 'fs';
-import { exit } from 'process';
-import { join } from 'path';
 
 async function MergePDFs(files, output) {
     const doc = new Document()
 
-    const PDFs = files.map((file) => new ExternalDocument(readFileSync(file)));
+    const PDFs = files.map(file => new ExternalDocument(readFileSync(file)))
 
     for (const file of PDFs) {
-        doc.addPagesOf(file);
+        doc.addPagesOf(file)
     }
 
     const writeStream = doc.pipe(createWriteStream(output))
@@ -89,26 +90,24 @@ async function GeneratePDFs() {
 
     await browser.close()
 
-    return titles;
+    return titles
 }
 
 async function Cleanup(files) {
-    for (const title of files) {
-        await unlink(title)
+    for (const file of files) {
+        await unlink(file)
     }
 }
 
 async function main() {
-    const dest = CLi();
+    const dest = CLi()
 
     const files = await GeneratePDFs()
 
     // merge generated pdf files
-    const output = 'RealWorldOcaml.pdf'
     console.log('Merging PDFs')
-
+    const output = 'RealWorldOcaml.pdf'
     const destPath = join(dest, output)
-
     await MergePDFs(files, destPath)
     console.log('PDF files merged')
 
@@ -120,32 +119,36 @@ async function main() {
 }
 
 function CLi() {
-    const args = process.argv.slice(2);
-    const { name, version, dependencies } = JSON.parse(readFileSync('./package.json', { encoding: 'utf-8' }))
+    const args = process.argv.slice(2)
+    const { name, version, dependencies } = JSON.parse(
+        readFileSync('./package.json', { encoding: 'utf-8' })
+    )
 
     if (args.length < 1) {
-        return '.';
+        return '.'
     } else if (args.length == 1) {
-        let dest = args[0];
+        let dest = args[0]
 
         switch (dest) {
-            case "--help":
-            case "-h":
+            case '--help':
+            case '-h':
                 console.log(`Usage: ${name} <path>`)
                 exit(0)
 
-            case "--version":
-            case "-v":
-                const deps = Object.keys(dependencies).map((dep) => `${dep} - ${dependencies[dep]}`).join('\n');
+            case '--version':
+            case '-v':
+                const deps = Object.keys(dependencies)
+                    .map(dep => `${dep} - ${dependencies[dep]}`)
+                    .join('\n')
                 console.log(`${name} v${version}\n\nDependencies:\n${deps}`)
                 exit(0)
 
             default:
                 try {
-                    let stat = statSync(dest);
+                    let stat = statSync(dest)
 
                     if (stat.isDirectory()) {
-                        return dest;
+                        return dest
                     } else {
                         console.error(`${name}: '${dest}' is not a directory`)
                         exit(1)
@@ -155,11 +158,10 @@ function CLi() {
                     exit(1)
                 }
         }
-
     } else {
         console.error(`Too arguments supplied\nUsage: ${name} <path>`)
         exit(1)
     }
 }
 
-await main();
+await main()
